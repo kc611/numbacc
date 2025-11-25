@@ -37,7 +37,7 @@ jobs:
     name: ${{ matrix.platform }}-py${{ matrix.python-version }}-build
     runs-on: ${{ matrix.runner }}
     env:
-      EXTRA_CHANNELS: ''
+      EXTRA_CHANNELS: 'conda-forge'
     defaults:
       run:
         shell: bash -elx {0}
@@ -46,7 +46,7 @@ jobs:
         python-version: ["3.12"]
         platform: ["linux-64"]
         runner: ["ubuntu-24.04"]
-        channel: ["file:///${{ github.workspace }}/mlir_conda_packages"]
+        channel: ["conda-forge"]
       fail-fast: false
 
     steps:
