@@ -49,7 +49,12 @@ jobs:
           GITHUB_LABEL_NAME: ${{ github.event.label.name }}
           GITHUB_WORKFLOW_INPUT: ${{ toJson(github.event.inputs) }}
         run: |
+          echo "=== Environment ==="
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Inputs: $GITHUB_WORKFLOW_INPUT"
+          echo "=== Running evaluation script ==="
           ./buildscripts/mlir_evaluate.py
+          echo "=== Evaluation completed ==="
 
   build:
     name: ${{ matrix.platform }}-py${{ matrix.python-version }}-build
