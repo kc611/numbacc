@@ -33,29 +33,6 @@ env:
   ARTIFACT_RETENTION_DAYS: 7
 
 jobs:
-  check:
-    runs-on: ubuntu-24.04
-    outputs:
-      matrix: ${{ steps.evaluate.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-        with:
-          python-version: '3.14'
-      - name: Evaluate
-        id: evaluate
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_LABEL_NAME: ${{ github.event.label.name }}
-          GITHUB_WORKFLOW_INPUT: ${{ toJson(github.event.inputs) }}
-        run: |
-          echo "=== Environment ==="
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "Inputs: $GITHUB_WORKFLOW_INPUT"
-          echo "=== Running evaluation script ==="
-          ./buildscripts/mlir_evaluate.py
-          echo "=== Evaluation completed ==="
-
   build:
     name: ${{ matrix.platform }}-py${{ matrix.python-version }}-build
     runs-on: ${{ matrix.runner }}
@@ -65,7 +42,11 @@ jobs:
       run:
         shell: bash -elx {0}
     strategy:
-      matrix: ${{fromJson(needs.check.outputs.matrix)}}
+      matrix:
+        python-version: ["3.12"]
+        platform: ["linux-64"]
+        runner: ["ubuntu-24.04"]
+        channel: ["file:///${{ github.workspace }}/mlir_conda_packages"]
       fail-fast: false
 
     steps:
@@ -85,11 +66,7 @@ jobs:
 
       - name: Build mlir-python-bindings conda package
         run: |
-          if [ "${{ inputs.mlir_run_id }}" != "" ]; then
-              MLIR_CHANNEL="file:///${{ github.workspace }}/mlir_conda_packages"
-          else
-              MLIR_CHANNEL="numba/label/dev"
-          fi
+          MLIR_CHANNEL=${{ matrix.channel }}
           CONDA_CHANNEL_DIR="conda_channel_dir"
           mkdir $CONDA_CHANNEL_DIR
           if [ -n "${EXTRA_CHANNELS}" ]; then
