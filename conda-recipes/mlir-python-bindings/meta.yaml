@@ -27,28 +27,21 @@ requirements:
     - numba::llvmdev {{ version }}  # [build_platform != target_platform]
     - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - python                 # [build_platform != target_platform]
-    - numpy                  # [build_platform != target_platform]
     - nanobind >=2.4.0       # [build_platform != target_platform]
     - pybind11 >=2.8.0       # [build_platform != target_platform]
     # for native mlir-tblgen
-    - mlir                   # [build_platform != target_platform]
     - zlib                   # [build_platform != target_platform]
     - zstd                   # [build_platform != target_platform]
   host:
     - numba::llvmdev {{ version }}
-    - llvm {{ version }}
-    - mlir  {{ version }}
-    - libmlir
     - zlib
     - zstd      # [win]
     - python
-    - numpy
     - nanobind >=2.4.0
     - pybind11 >=2.8.0
   run:
     - python
     - pyyaml
-    - mlir {{ version }}
     # we need to do this manually because clang_bootstrap has no run-export
     - libcxx >={{ version }}    # [osx]
 
