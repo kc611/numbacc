@@ -6,7 +6,6 @@ on:
       - .github/workflows/llvmdev_build.yml
       - buildscripts/github/llvmdev_evaluate.py
       - conda-recipes/llvmdev/**
-      - conda-recipes/llvmdev_for_wheel/**
   label:
     types: [created]
   workflow_dispatch:
@@ -30,7 +29,6 @@ on:
         options:
           - all
           - llvmdev
-          - llvmdev_for_wheel
 
 concurrency:
   # Concurrency group that uses the workflow name and PR number if available
@@ -107,38 +105,6 @@ jobs:
           activate-environment: ''
           run-post: false
 
-      - name: Build and test conda package in manylinux - linux platforms
-        if: (matrix.platform == 'linux-64' || matrix.platform == 'linux-aarch64') && matrix.recipe == 'llvmdev_for_wheel'
-        env:
-          CONDA_CHANNEL_DIR: conda_channel_dir
-        run: |
-          set -x
-          # Set manylinux-specific variables
-          MANYLINUX_IMAGE=""
-          MINICONDA_FILE=""
-          if [[ "${{ matrix.platform }}" == "linux-64" ]]; then
-            MANYLINUX_IMAGE="quay.io/pypa/manylinux2014_x86_64"
-            MINICONDA_FILE="https://repo.anaconda.com/miniconda/Miniconda3-py311_24.9.2-0-Linux-x86_64.sh"
-          elif [[ "${{ matrix.platform }}" == "linux-aarch64" ]]; then
-            MANYLINUX_IMAGE="quay.io/pypa/manylinux_2_28_aarch64"
-            MINICONDA_FILE="https://repo.anaconda.com/miniconda/Miniconda3-py311_24.9.2-0-Linux-aarch64.sh"
-          fi
-
-          echo "Building in manylinux container for ${{ matrix.platform }}"
-          mkdir -p docker_output
-          docker run --rm \
-            -v "$(pwd):/root/llvmlite" \
-            "$MANYLINUX_IMAGE" \
-            bash -c "git config --global --add safe.directory /root/llvmlite && /root/llvmlite/buildscripts/manylinux/build_llvmdev.sh $MINICONDA_FILE"
-
-          sudo chown -R "$(id -u):$(id -g)" docker_output
-
-          # The script outputs to docker_output/<platform>/*.conda
-          # Move the package to the upload directory.
-          mkdir -p "${CONDA_CHANNEL_DIR}"
-          mv docker_output/*/*.conda "${CONDA_CHANNEL_DIR}/"
-          ls -lah "${CONDA_CHANNEL_DIR}"
-
       - name: Install conda-build
         if: (matrix.platform != 'linux-64' && matrix.platform != 'linux-aarch64') || matrix.recipe != 'llvmdev_for_wheel'
         run: |
@@ -166,4 +132,4 @@ jobs:
       - name: Get Workflow Run ID
         run: |
           echo "Current workflow run ID: ${{ github.run_id }}"
-          echo "Use this ID when triggering llvmlite workflow"
+          echo "Use this ID when triggering numbacc workflow"
