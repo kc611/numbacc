@@ -34,22 +34,39 @@ fi
 mkdir -p build
 cd build
 
+# Build cmake arguments with conditional Intel JIT events support
+CMAKE_INTEL_JITEVENTS_ARG=""
+if [[ "${target_platform}" == "linux-64" ]]; then
+  CMAKE_INTEL_JITEVENTS_ARG="-DLLVM_USE_INTEL_JITEVENTS=ON"
+fi
+
 cmake ${CMAKE_ARGS} \
   -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
   -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_BUILD_LLVM_DYLIB=OFF \
   -DLLVM_LINK_LLVM_DYLIB=OFF \
-  -DLLVM_BUILD_TOOLS=ON \
-  -DLLVM_BUILD_UTILS=ON \
   -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+  -DLLVM_BUILD_TOOLS=ON \
+  ${CMAKE_INTEL_JITEVENTS_ARG} \
   -DPython_EXECUTABLE="$PYTHON" \
   -DPython_INCLUDE_DIR="$PREFIX/include/python$PY_VER" \
   -DPython3_EXECUTABLE="$PYTHON" \
   -GNinja \
   ../mlir
 
-ninja
-ninja install
+
+echo "Building TableGen tools..."
+ninja mlir-tblgen
+
+# FIX: Generate all required headers before main build
+echo "Generating MLIR headers..."
+ninja mlir-headers
+
+# Now do the main build
+echo "Building MLIR..."
+ninja 
+ninja install 
 
 cd $PREFIX
 
@@ -57,3 +74,9 @@ mkdir -p $SP_DIR
 mv $PREFIX/python_packages/mlir_core/mlir $SP_DIR/
 
 rm -rf $PREFIX/src $PREFIX/python_packages
+
+# more clean up
+rm $PREFIX/lib/libMLIR*.a
+rm -rf $PREFIX/lib/objects-Release
+rm -rf $PREFIX/lib/cmake
+rm -rf $PREFIX/include
